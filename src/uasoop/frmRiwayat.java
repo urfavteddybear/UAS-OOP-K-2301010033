@@ -44,10 +44,23 @@ public class frmRiwayat extends javax.swing.JFrame {
         txTanggalDari.setText(dateFormat.format(startOfMonth));
         
         loadData();
-    }    void loadData() {
+        
+        // Set lebar kolom agar proporsional
+        tblRiwayat.getColumnModel().getColumn(0).setPreferredWidth(50);  // ID
+        tblRiwayat.getColumnModel().getColumn(1).setPreferredWidth(150); // Pelanggan
+        tblRiwayat.getColumnModel().getColumn(2).setPreferredWidth(100); // Tanggal Sewa
+        tblRiwayat.getColumnModel().getColumn(3).setPreferredWidth(100); // Tanggal Kembali
+        tblRiwayat.getColumnModel().getColumn(4).setPreferredWidth(70);  // Durasi
+        tblRiwayat.getColumnModel().getColumn(5).setPreferredWidth(120); // Total
+        tblRiwayat.getColumnModel().getColumn(6).setPreferredWidth(80);  // Status
+        tblRiwayat.getColumnModel().getColumn(7).setPreferredWidth(100); // User
+    }
+
+    void loadData() {
         model.setRowCount(0);
-        try {            String sql = "SELECT t.id_transaksi, p.nama_pelanggan, t.tanggal_sewa, t.tanggal_kembali, " +
-                        "t.durasi, t.total_harga, u.nama " +
+        try {
+            String sql = "SELECT t.id_transaksi, p.nama_pelanggan, t.tanggal_sewa, t.tanggal_kembali, " +
+                        "t.durasi, t.total_harga, t.status, u.nama " +
                         "FROM transaksi t " +
                         "JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan " +
                         "JOIN users u ON t.id_user = u.id_user " +
@@ -58,7 +71,8 @@ public class frmRiwayat extends javax.swing.JFrame {
             
             int totalTransaksi = 0;
             double totalPendapatan = 0;
-              while (rs.next()) {
+            
+            while (rs.next()) {
                 model.addRow(new Object[]{
                     rs.getInt("id_transaksi"),
                     rs.getString("nama_pelanggan"),
@@ -66,6 +80,7 @@ public class frmRiwayat extends javax.swing.JFrame {
                     rs.getString("tanggal_kembali"),
                     rs.getInt("durasi") + " hari",
                     currencyFormat.format(rs.getDouble("total_harga")),
+                    rs.getString("status"),
                     rs.getString("nama")
                 });
                 
@@ -79,7 +94,9 @@ public class frmRiwayat extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error loading data: " + e.getMessage());
         }
-    }    void cariData() {
+    }
+
+    void cariData() {
         String tanggalDari = txTanggalDari.getText();
         String tanggalSampai = txTanggalSampai.getText();
         
@@ -91,7 +108,7 @@ public class frmRiwayat extends javax.swing.JFrame {
         model.setRowCount(0);
         try {
             String sql = "SELECT t.id_transaksi, p.nama_pelanggan, t.tanggal_sewa, t.tanggal_kembali, " +
-                        "t.durasi, t.total_harga, u.nama " +
+                        "t.durasi, t.total_harga, t.status, u.nama " +
                         "FROM transaksi t " +
                         "JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan " +
                         "JOIN users u ON t.id_user = u.id_user " +
@@ -114,6 +131,7 @@ public class frmRiwayat extends javax.swing.JFrame {
                     rs.getString("tanggal_kembali"),
                     rs.getInt("durasi") + " hari",
                     currencyFormat.format(rs.getDouble("total_harga")),
+                    rs.getString("status"),
                     rs.getString("nama")
                 });
                 
@@ -125,18 +143,20 @@ public class frmRiwayat extends javax.swing.JFrame {
             lblTotalPendapatan.setText(currencyFormat.format(totalPendapatan));
             
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error searching data: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
     }
 
     void lihatDetail() {
         int row = tblRiwayat.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Pilih transaksi terlebih dahulu!");
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Pilih transaksi untuk melihat detail!");
             return;
         }
         
-        int idTransaksi = (Integer) model.getValueAt(row, 0);        try {
+        int idTransaksi = (int) model.getValueAt(row, 0);
+        
+        try {
             String sql = "SELECT b.nama_barang, dt.jumlah, dt.harga_satuan, dt.subtotal " +
                         "FROM detail_transaksi dt " +
                         "JOIN barang b ON dt.id_barang = b.id_barang " +
@@ -147,28 +167,88 @@ public class frmRiwayat extends javax.swing.JFrame {
             ResultSet rs = ps.executeQuery();
             
             StringBuilder detail = new StringBuilder();
-            detail.append("Detail Transaksi #").append(idTransaksi).append("\n");
-            detail.append("Pelanggan: ").append(model.getValueAt(row, 1)).append("\n");
-            detail.append("Tanggal Sewa: ").append(model.getValueAt(row, 2)).append("\n");
-            detail.append("Tanggal Kembali: ").append(model.getValueAt(row, 3)).append("\n");
-            detail.append("Durasi: ").append(model.getValueAt(row, 4)).append("\n\n");
-            detail.append("Detail Barang:\n");
-            detail.append("=====================================\n");
+            detail.append("DETAIL TRANSAKSI #").append(idTransaksi).append("\n\n");
             
             while (rs.next()) {
-                detail.append("• ").append(rs.getString("nama_barang")).append("\n");
-                detail.append("  Jumlah: ").append(rs.getInt("jumlah")).append("\n");
-                detail.append("  Harga: ").append(currencyFormat.format(rs.getDouble("harga_satuan"))).append("/hari\n");
-                detail.append("  Subtotal: ").append(currencyFormat.format(rs.getDouble("subtotal"))).append("\n\n");
+                detail.append("Barang: ").append(rs.getString("nama_barang")).append("\n");
+                detail.append("Jumlah: ").append(rs.getInt("jumlah")).append("\n");
+                detail.append("Harga: ").append(currencyFormat.format(rs.getDouble("harga_satuan"))).append("\n");
+                detail.append("Subtotal: ").append(currencyFormat.format(rs.getDouble("subtotal"))).append("\n\n");
             }
-            
-            detail.append("=====================================\n");
-            detail.append("Total: ").append(model.getValueAt(row, 5));
             
             JOptionPane.showMessageDialog(this, detail.toString(), "Detail Transaksi", JOptionPane.INFORMATION_MESSAGE);
             
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+    
+    void kembalikanBarang() {
+        int row = tblRiwayat.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Pilih transaksi yang akan ditandai sebagai selesai!");
+            return;
+        }
+        
+        int idTransaksi = (int) model.getValueAt(row, 0);
+        String status = (String) model.getValueAt(row, 6); // Kolom status
+        
+        if ("Selesai".equals(status)) {
+            JOptionPane.showMessageDialog(this, "Transaksi ini sudah selesai!");
+            return;
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Apakah yakin menandai transaksi ini sebagai SELESAI?\n" +
+            "Stok barang akan dikembalikan ke inventory.", 
+            "Konfirmasi Pengembalian", 
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                // Mulai transaction
+                koneksi.setAutoCommit(false);
+                
+                // 1. Update status transaksi menjadi 'Selesai'
+                String updateTransaksi = "UPDATE transaksi SET status = 'Selesai' WHERE id_transaksi = ?";
+                PreparedStatement ps1 = koneksi.prepareStatement(updateTransaksi);
+                ps1.setInt(1, idTransaksi);
+                ps1.executeUpdate();
+                
+                // 2. Kembalikan stok barang
+                String getDetails = "SELECT id_barang, jumlah FROM detail_transaksi WHERE id_transaksi = ?";
+                PreparedStatement ps2 = koneksi.prepareStatement(getDetails);
+                ps2.setInt(1, idTransaksi);
+                ResultSet rs = ps2.executeQuery();
+                
+                while (rs.next()) {
+                    int idBarang = rs.getInt("id_barang");
+                    int jumlah = rs.getInt("jumlah");
+                    
+                    // Update stok barang (menambah kembali)
+                    String updateStok = "UPDATE barang SET stok = stok + ? WHERE id_barang = ?";
+                    PreparedStatement ps3 = koneksi.prepareStatement(updateStok);
+                    ps3.setInt(1, jumlah);
+                    ps3.setInt(2, idBarang);
+                    ps3.executeUpdate();
+                }
+                
+                // Commit transaction
+                koneksi.commit();
+                koneksi.setAutoCommit(true);
+                
+                JOptionPane.showMessageDialog(this, "Pengembalian berhasil! Stok barang telah dikembalikan.");
+                loadData(); // Refresh data
+                
+            } catch (Exception e) {
+                try {
+                    koneksi.rollback();
+                    koneksi.setAutoCommit(true);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            }
         }
     }
 
@@ -196,8 +276,7 @@ public class frmRiwayat extends javax.swing.JFrame {
         btnDetail = new javax.swing.JButton();
         btnTutup = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        btnKembalikan = new javax.swing.JButton();        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Riwayat Transaksi");
         setResizable(false);
 
@@ -224,11 +303,11 @@ public class frmRiwayat extends javax.swing.JFrame {
 
             },
             new String [] {
-                "ID", "Pelanggan", "Tanggal Sewa", "Tanggal Kembali", "Durasi", "Total", "User"
+                "ID", "Pelanggan", "Tanggal Sewa", "Tanggal Kembali", "Durasi", "Total", "Status", "User"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -264,49 +343,61 @@ public class frmRiwayat extends javax.swing.JFrame {
         });
 
         jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel5.setText("Riwayat Transaksi");
+        jLabel5.setText("RIWAYAT TRANSAKSI");
+
+        btnKembalikan.setText("Kembalikan Barang");
+        btnKembalikan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnKembalikanActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(20, 20, 20)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel5)
+                    .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txTanggalDari, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addComponent(txTanggalDari, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txTanggalSampai, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addComponent(txTanggalSampai, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnCari)
-                        .addGap(18, 18, 18)
-                        .addComponent(btnRefresh))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 700, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnRefresh)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblTotalTransaksi)
                         .addGap(30, 30, 30)
-                        .addComponent(lblTotalTransaksi, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(50, 50, 50)
                         .addComponent(jLabel4)
-                        .addGap(30, 30, 30)
-                        .addComponent(lblTotalPendapatan, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblTotalPendapatan)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnDetail)
-                        .addGap(18, 18, 18)
-                        .addComponent(btnTutup)))
-                .addContainerGap(30, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnKembalikan)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnTutup))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(20, 20, 20)
+                .addContainerGap()
                 .addComponent(jLabel5)
-                .addGap(20, 20, 20)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(txTanggalDari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -314,22 +405,25 @@ public class frmRiwayat extends javax.swing.JFrame {
                     .addComponent(txTanggalSampai, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnCari)
                     .addComponent(btnRefresh))
-                .addGap(20, 20, 20)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(20, 20, 20)
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(lblTotalTransaksi)
                     .addComponent(jLabel4)
-                    .addComponent(lblTotalPendapatan))
-                .addGap(20, 20, 20)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblTotalPendapatan)
                     .addComponent(btnDetail)
-                    .addComponent(btnTutup))
-                .addContainerGap(20, Short.MAX_VALUE))
+                    .addComponent(btnTutup)
+                    .addComponent(btnKembalikan))
+                .addContainerGap())
         );
 
         pack();
+        setLocationRelativeTo(null);
+        
+        // Set minimum size untuk memastikan semua tombol terlihat
+        setMinimumSize(new java.awt.Dimension(850, 500));
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCariActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCariActionPerformed
@@ -347,6 +441,10 @@ public class frmRiwayat extends javax.swing.JFrame {
     private void btnTutupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTutupActionPerformed
         dispose();
     }//GEN-LAST:event_btnTutupActionPerformed
+
+    private void btnKembalikanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnKembalikanActionPerformed
+        kembalikanBarang();
+    }//GEN-LAST:event_btnKembalikanActionPerformed
 
     /**
      * @param args the command line arguments
@@ -386,6 +484,7 @@ public class frmRiwayat extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCari;
     private javax.swing.JButton btnDetail;
+    private javax.swing.JButton btnKembalikan;
     private javax.swing.JButton btnRefresh;
     private javax.swing.JButton btnTutup;
     private javax.swing.JLabel jLabel1;

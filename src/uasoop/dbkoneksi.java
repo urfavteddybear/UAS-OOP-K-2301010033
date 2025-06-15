@@ -14,7 +14,7 @@ import java.sql.SQLException;
  */
 public class dbkoneksi {
     static String JDBC_DRIVER="com.mysql.cj.jdbc.Driver";
-    static String DB_URL="jdbc:mysql://100.99.1.1:3306/sewa_kamera_db";
+    static String DB_URL="jdbc:mysql://localhost:3306/sewa_kamera_db";
     static String DB_USER="root";
     static String DB_PASS = "";
     static Connection koneksi;
