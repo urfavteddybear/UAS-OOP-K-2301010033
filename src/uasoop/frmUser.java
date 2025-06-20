@@ -51,22 +51,23 @@ public class frmUser extends javax.swing.JFrame {
         btnUpdate.setEnabled(opsi);
         btnHapus.setEnabled(opsi);
     }
-    
-    private void storeData() throws SQLException {
+      private void storeData() throws SQLException {
         String username = txtUsername.getText();
         String password = new String(txtPassword.getPassword());
         String role = (String) cmbRole.getSelectedItem();
+        
+        // Hash password sebelum menyimpan ke database
+        String hashedPassword = PasswordUtils.hashPassword(password);
         
         Connection cnn = koneksi();
         PreparedStatement PS = cnn.prepareStatement("INSERT INTO users(nama, username, password, role) VALUES(?,?,?,?)");
         PS.setString(1, username); // Using username as nama for now
         PS.setString(2, username);
-        PS.setString(3, password);
+        PS.setString(3, hashedPassword);
         PS.setString(4, role);
         PS.executeUpdate();
     }
-    
-    private void updateData() throws SQLException {
+      private void updateData() throws SQLException {
         String username = txtUsername.getText();
         String password = new String(txtPassword.getPassword());
         String role = (String) cmbRole.getSelectedItem();
@@ -84,7 +85,9 @@ public class frmUser extends javax.swing.JFrame {
         PS.setString(3, role);
         
         if (!password.isEmpty()) {
-            PS.setString(4, password);
+            // Hash password sebelum update ke database
+            String hashedPassword = PasswordUtils.hashPassword(password);
+            PS.setString(4, hashedPassword);
             PS.setString(5, this.edUsername);
         } else {
             PS.setString(4, this.edUsername);

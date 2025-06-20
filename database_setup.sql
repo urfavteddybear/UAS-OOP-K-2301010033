@@ -69,8 +69,8 @@ CREATE TABLE detail_transaksi (
 
 -- Insert default admin user
 INSERT INTO users (nama, username, password, role) VALUES 
-('Administrator', 'admin', 'admin123', 'admin'),
-('Operator User', 'operator', 'op123', 'operator');
+('Administrator', 'admin', '197f4186d0809ae24a02faa5f2319179ab80cb1a1416d72e78f375fe8edd0315', 'admin'),
+('Operator User', 'operator', 'b3a78ea6432b350ee22a0e9ae06e06e38e6569887bd6daaf30a690db1cf3d1e5', 'operator');
 
 -- Insert sample barang data
 INSERT INTO barang (nama_barang, stok, harga_sewa) VALUES 

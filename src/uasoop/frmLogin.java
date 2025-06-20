@@ -35,21 +35,29 @@ public class frmLogin extends javax.swing.JFrame {
                     "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        try {
+          try {
             Connection cnn = koneksi();
-            PreparedStatement PS = cnn.prepareStatement("SELECT * FROM users WHERE username=? AND password=?");
+            PreparedStatement PS = cnn.prepareStatement("SELECT * FROM users WHERE username=?");
             PS.setString(1, username);
-            PS.setString(2, password);
             ResultSet RS = PS.executeQuery();
             
             if (RS.next()) {
-                SessionUser.setUser(RS.getInt("id_user"), RS.getString("username"), RS.getString("role"));
-                JOptionPane.showMessageDialog(this, "Login berhasil! Selamat datang " + username, 
-                        "Success", JOptionPane.INFORMATION_MESSAGE);
+                String hashedPasswordFromDB = RS.getString("password");
                 
-                new frmDashboard().setVisible(true);
-                this.dispose();
+                // Verifikasi password menggunakan hash
+                if (PasswordUtils.verifyPassword(password, hashedPasswordFromDB)) {
+                    SessionUser.setUser(RS.getInt("id_user"), RS.getString("username"), RS.getString("role"));
+                    JOptionPane.showMessageDialog(this, "Login berhasil! Selamat datang " + username, 
+                            "Success", JOptionPane.INFORMATION_MESSAGE);
+                    
+                    new frmDashboard().setVisible(true);
+                    this.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Username atau password salah!", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    txtPassword.setText("");
+                    txtUsername.requestFocus();
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Username atau password salah!", 
                         "Error", JOptionPane.ERROR_MESSAGE);
