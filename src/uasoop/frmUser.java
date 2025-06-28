@@ -319,6 +319,7 @@ public class frmUser extends javax.swing.JFrame {
             tombolisEnabled(false);
             btnUpdate.setEnabled(true);
             fieldisEnabled(true);
+            btnUpdate.setText("Save");
             this.edUsername = txtUsername.getText();
         } else {
             if (txtUsername.getText().trim().isEmpty()) {
